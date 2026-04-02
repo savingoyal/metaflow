@@ -37,7 +37,7 @@ from metaflow._vendor import click
 
 # we use Metaflow's parallel_imap_unordered instead of
 # multiprocessing.Pool because https://bugs.python.org/issue31886
-from metaflow.util import TempDir, url_quote, url_unquote
+from metaflow.util import url_quote, url_unquote
 from metaflow.multicore_utils import parallel_map
 from metaflow.plugins.datatools.s3.s3util import (
     aws_retry,
@@ -447,7 +447,7 @@ def start_workers(mode, urls, num_workers, inject_failure, s3config):
         queue.put((None, None))
 
     # 3. start processes
-    with TempDir() as output_dir:
+    with tempfile.TemporaryDirectory() as output_dir:
         for i in range(num_workers):
             file_path = os.path.join(output_dir, str(i))
             p = Process(

@@ -35,11 +35,6 @@ from .user_decorators.user_step_decorator import StepMutator
 from .util import to_pod
 from .metaflow_config import INCLUDE_FOREACH_STACK, MAXIMUM_FOREACH_VALUE_CHARS
 
-# For Python 3 compatibility
-try:
-    basestring
-except NameError:
-    basestring = str
 
 
 from .datastore.inputs import Inputs
@@ -889,14 +884,14 @@ class FlowSpec(metaclass=FlowSpecMeta):
 
         def _is_primitive_type(item):
             return (
-                isinstance(item, basestring)
+                isinstance(item, str)
                 or isinstance(item, int)
                 or isinstance(item, float)
                 or isinstance(item, bool)
             )
 
         value = item if _is_primitive_type(item) else reprlib.Repr().repr(item)
-        return basestring(value)[:MAXIMUM_FOREACH_VALUE_CHARS]
+        return str(value)[:MAXIMUM_FOREACH_VALUE_CHARS]
 
     def next(self, *dsts: Callable[..., None], **kwargs) -> None:
         """
@@ -975,7 +970,7 @@ class FlowSpec(metaclass=FlowSpecMeta):
                 )
                 raise InvalidNextException(msg)
 
-            if not isinstance(condition, basestring):
+            if not isinstance(condition, str):
                 msg = (
                     "Step *{step}* has an invalid self.next() transition. "
                     "The argument to 'condition' must be a string.".format(step=step)
@@ -1073,7 +1068,7 @@ class FlowSpec(metaclass=FlowSpecMeta):
 
         # check: foreach is valid
         if foreach:
-            if not isinstance(foreach, basestring):
+            if not isinstance(foreach, str):
                 msg = (
                     "Step *{step}* has an invalid self.next() transition. "
                     "The argument to 'foreach' must be a string.".format(step=step)
