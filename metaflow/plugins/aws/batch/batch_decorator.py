@@ -99,6 +99,8 @@ class BatchDecorator(StepDecorator):
         List of strings containing options for the chosen log driver. The configurable values
         depend on the `log driver` chosen. Validation of these options is not supported yet.
         Example: [`awslogs-group:aws/batch/job`]
+    privileged: bool, default False
+        Control whether the task can run as a privileged process on AWS Batch
     """
 
     name = "batch"
@@ -127,6 +129,7 @@ class BatchDecorator(StepDecorator):
         "log_driver": None,
         "log_options": None,
         "executable": None,
+        "privileged": False,
     }
     resource_defaults = {
         "cpu": "1",
@@ -333,7 +336,7 @@ class BatchDecorator(StepDecorator):
                 meta["aws-batch-awslogs-group"] = logs_meta.get("awslogs-group")
                 meta["aws-batch-awslogs-region"] = logs_meta.get("awslogs-region")
                 meta["aws-batch-awslogs-stream"] = logs_meta.get("awslogs-stream")
-            except:
+            except Exception:
                 pass
 
             instance_meta = get_ec2_instance_metadata()
@@ -402,7 +405,7 @@ class BatchDecorator(StepDecorator):
         try:
             self._save_logs_sidecar.terminate()
             self._spot_monitor_sidecar.terminate()
-        except:
+        except Exception:
             # Best effort kill
             pass
 

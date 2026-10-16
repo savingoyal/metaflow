@@ -12,6 +12,7 @@ from metaflow.plugins.aws.aws_utils import sanitize_batch_tag
 from metaflow.exception import MetaflowException
 from metaflow.metaflow_config import (
     OTEL_ENDPOINT,
+    OTEL_SERVICE_NAME,
     SERVICE_INTERNAL_URL,
     DATATOOLS_S3ROOT,
     DATASTORE_SYSROOT_S3,
@@ -256,6 +257,7 @@ class Batch(object):
         log_driver=None,
         log_options=None,
         offload_command_to_s3=False,
+        privileged=False,
     ):
         job_name = self._job_name(
             attrs.get("metaflow.user"),
@@ -313,6 +315,7 @@ class Batch(object):
                 ephemeral_storage=ephemeral_storage,
                 log_driver=log_driver,
                 log_options=log_options,
+                privileged=privileged,
             )
             .task_id(attrs.get("metaflow.task_id"))
             .environment_variable("AWS_DEFAULT_REGION", self._client.region())
@@ -331,6 +334,7 @@ class Batch(object):
             .environment_variable("METAFLOW_DEFAULT_METADATA", DEFAULT_METADATA)
             .environment_variable("METAFLOW_CARD_S3ROOT", CARD_S3ROOT)
             .environment_variable("METAFLOW_OTEL_ENDPOINT", OTEL_ENDPOINT)
+            .environment_variable("METAFLOW_OTEL_SERVICE_NAME", OTEL_SERVICE_NAME)
             .environment_variable("METAFLOW_RUNTIME_ENVIRONMENT", "aws-batch")
         )
 
@@ -437,6 +441,7 @@ class Batch(object):
         ephemeral_storage=None,
         log_driver=None,
         log_options=None,
+        privileged=None,
     ):
         if queue is None:
             queue = next(self._client.active_job_queues(), None)
@@ -479,6 +484,7 @@ class Batch(object):
             ephemeral_storage=ephemeral_storage,
             log_driver=log_driver,
             log_options=log_options,
+            privileged=privileged,
         )
         self.num_parallel = num_parallel
         self.job = job.execute()

@@ -187,9 +187,9 @@ def worker(result_file_name, queue, mode, s3config):
             to_return = {
                 "error": None,
                 "size": head["ContentLength"],
-                "content_type": head["ContentType"],
+                "content_type": head.get("ContentType"),
                 "encryption": head.get("ServerSideEncryption"),
-                "metadata": head["Metadata"],
+                "metadata": head.get("Metadata", {}),
                 "last_modified": get_timestamp(head["LastModified"]),
             }
         except client_error as err:
@@ -313,10 +313,10 @@ def worker(result_file_name, queue, mode, s3config):
                                 "size": resp["ContentLength"],
                                 "range_result": range_result,
                             }
-                            if resp["ContentType"]:
-                                args["content_type"] = resp["ContentType"]
-                            if resp["Metadata"] is not None:
-                                args["metadata"] = resp["Metadata"]
+                            if resp.get("ContentType"):
+                                args["content_type"] = resp.get("ContentType")
+                            if resp.get("Metadata") is not None:
+                                args["metadata"] = resp.get("Metadata")
                             if resp.get("ServerSideEncryption") is not None:
                                 args["encryption"] = resp["ServerSideEncryption"]
                             if resp["LastModified"]:
@@ -578,8 +578,8 @@ class S3Ops(object):
                             url=url.url,
                             local=url.local,
                             prefix=url.prefix,
-                            content_type=head["ContentType"],
-                            metadata=head["Metadata"],
+                            content_type=head.get("ContentType"),
+                            metadata=head.get("Metadata", {}),
                             encryption=head.get("ServerSideEncryption"),
                             range=url.range,
                         ),
@@ -879,7 +879,8 @@ def lst(
         # We always consider the path being passed in to be a directory path so
         # we add a trailing slash to the path if it doesn't already have one.
         path_with_slash = src.path.lstrip("/")
-        if not path_with_slash.endswith("/"):
+        # NOTE: Adding a slash to an empty path messes with listing bucket root.
+        if path_with_slash and not path_with_slash.endswith("/"):
             path_with_slash += "/"
         url = S3Url(
             url=url,

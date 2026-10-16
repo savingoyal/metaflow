@@ -48,14 +48,22 @@ def _execute_cmd(func, flow_name, run_id, user, my_runs, echo):
     func(flow_name, run_id, user, echo)
 
 
-@batch.command("list", help="List unfinished AWS Batch tasks of this flow")
+@batch.command(
+    "list",
+    help="\b\nList unfinished AWS Batch tasks of this flow.\n"
+    "By default, consider the latest run only.",
+)
 @click.option(
     "--my-runs",
     default=False,
     is_flag=True,
-    help="List all my unfinished tasks.",
+    help="List my unfinished tasks, across all runs.",
 )
-@click.option("--user", default=None, help="List unfinished tasks for the given user.")
+@click.option(
+    "--user",
+    default=None,
+    help="List unfinished tasks for the given user, across all runs.",
+)
 @click.option(
     "--run-id",
     default=None,
@@ -69,17 +77,20 @@ def _list(ctx, run_id, user, my_runs):
     )
 
 
-@batch.command(help="Terminate unfinished AWS Batch tasks of this flow.")
+@batch.command(
+    help="\b\nTerminate unfinished AWS Batch tasks of this flow.\n"
+    "By default, consider the latest run only.",
+)
 @click.option(
     "--my-runs",
     default=False,
     is_flag=True,
-    help="Kill all my unfinished tasks.",
+    help="Kill my unfinished tasks, across all runs.",
 )
 @click.option(
     "--user",
     default=None,
-    help="Terminate unfinished tasks for the given user.",
+    help="Terminate unfinished tasks for the given user, across all runs.",
 )
 @click.option(
     "--run-id",
@@ -190,6 +201,7 @@ def kill(ctx, run_id, user, my_runs):
     type=int,
     help="Number of parallel nodes to run as a multi-node job.",
 )
+@click.option("--privileged", is_flag=True, help="Run the AWS Batch Job as privileged")
 @click.pass_context
 def step(
     ctx,
@@ -222,6 +234,7 @@ def step(
     log_driver=None,
     log_options=None,
     num_parallel=None,
+    privileged=None,
     **kwargs
 ):
     def echo(msg, stream="stderr", batch_id=None, **kwargs):
@@ -284,7 +297,10 @@ def step(
         "metaflow_version"
     ]
 
-    env = {"METAFLOW_FLOW_FILENAME": os.path.basename(sys.argv[0])}
+    env = {
+        "METAFLOW_FLOW_FILENAME": os.path.basename(sys.argv[0]),
+        "METAFLOW_RUN_ID": kwargs["run_id"],
+    }
 
     if aws_batch_tags is not None:
         # We do not need to validate these again,
@@ -366,6 +382,7 @@ def step(
                 log_driver=log_driver,
                 log_options=log_options,
                 num_parallel=num_parallel,
+                privileged=privileged,
             )
     except Exception:
         traceback.print_exc()
